@@ -1,10 +1,16 @@
 package TicTacToe;
 
 import java.io.IOException;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
+import com.sun.org.apache.xerces.internal.xs.ItemPSVI;
+
 public class Game {
+
+	private static final int INFINITE_PLUS_VALUE = 100;
+	private static final int INFINITE_MINUS_VALUE = -100;
 
 	public static void main(String[] args) {
 		Game game = new Game();
@@ -27,9 +33,9 @@ public class Game {
 				computerGoesFirst(scanner);
 			}
 		} catch (IOException e) {
-			
+
 		}
-		
+
 		printEndGame();
 		scanner.close();
 	}
@@ -55,13 +61,13 @@ public class Game {
 
 			while (playerTurn(board, scanner)) {
 			}
-			
+
 			if (isTerminal(board)) {
 
 				break;
 			}
 			computerTurn();
-			
+
 		}
 
 	}
@@ -71,12 +77,13 @@ public class Game {
 
 		Action computerAction = minimaxDecision(board);
 
-		System.out.printf("Computer made a move : %d %d\n", computerAction.getX(), computerAction.getY());
+		System.out.printf("Computer made a move : %d %d\n",
+				computerAction.getX(), computerAction.getY());
 
 		board.getState()[computerAction.getX()][computerAction.getY()] = 1;
 		board.setSuccessors(board.successors());
 		board.setUtilityValue(new UtilityValue());
-		
+
 		printBoard();
 	}
 
@@ -101,28 +108,37 @@ public class Game {
 	}
 
 	private void printState(int i) {
-		if(i == 1) {
+		if (i == 1) {
 			System.out.print("x ");
-		} else if( i == -1 ){
+		} else if (i == -1) {
 			System.out.print("o ");
 		} else {
 			System.out.print("_ ");
 		}
-			
-		
+
 	}
 
 	private boolean playerTurn(Board board2, Scanner scanner) {
 		System.out.print("Make a move : ");
-		int x = scanner.nextInt();
-		int y = scanner.nextInt();
+		int x;
+		int y;
 
-		if (notValidMove(x, y)) {
-			System.out.println("Invalid move!");
+		try {
+			x = scanner.nextInt();
+			y = scanner.nextInt();
+			
+			if (notValidMove(x, y)) {
+				System.out.println("Invalid move!");
+				return true;
+			}
+
+			board2.getState()[x][y] = -1;
+		} catch (InputMismatchException e) {
+			System.out.println("Invalid input!");
 			return true;
 		}
 
-		board2.getState()[x][y] = -1;
+		
 		board2.setSuccessors(board2.successors());
 		board2.setUtilityValue(new UtilityValue());
 
@@ -131,7 +147,8 @@ public class Game {
 	}
 
 	private boolean notValidMove(int x, int y) {
-		if ((x > board.getState().length - 1 || x < 0) && (y > board.getState().length - 1 || y < 0)) {
+		if ((x > board.getState().length - 1 || x < 0)
+				|| (y > board.getState().length - 1 || y < 0)) {
 			return true;
 		}
 		if (board.getState()[x][y] == 0) {
@@ -143,9 +160,17 @@ public class Game {
 	private Action minimaxDecision(Board state) {
 
 		List<Action> actions = state.getSuccessors();
+		UtilityValue alpha = new UtilityValue(INFINITE_MINUS_VALUE, 0);
+		UtilityValue beta = new UtilityValue(INFINITE_PLUS_VALUE, 0);
 
 		for (Action a : actions) {
-			a.setUtilityValue(minUtilityValue(result(a, state, true)));
+			a.setUtilityValue(minUtilityValue(result(a, state, true), alpha,
+					beta));
+
+			if (max(a.getUtilityValue(), beta) == a.getUtilityValue()) {
+				return a;
+			}
+			alpha = max(alpha, a.getUtilityValue());
 		}
 
 		return maximalAction(actions);
@@ -154,7 +179,8 @@ public class Game {
 	private Action maximalAction(List<Action> actions) {
 		Action maximalAction = actions.get(0);
 		for (Action action : actions) {
-			if (action.getUtilityValue() == max(maximalAction.getUtilityValue(), action.getUtilityValue())) {
+			if (action.getUtilityValue() == max(
+					maximalAction.getUtilityValue(), action.getUtilityValue())) {
 				maximalAction = action;
 			}
 		}
@@ -213,14 +239,27 @@ public class Game {
 		return copy;
 	}
 
-	private UtilityValue maxUtilityValue(Board state) {
+	private UtilityValue maxUtilityValue(Board state, UtilityValue alpha,
+			UtilityValue beta) {
 		if (isTerminal(state)) {
 			return state.getUtilityValue();
 		}
-		UtilityValue v = new UtilityValue(-100, 0);
+		UtilityValue v = new UtilityValue(INFINITE_MINUS_VALUE, 0);
+		UtilityValue alpha1 = new UtilityValue(alpha.getValue(),
+				alpha.getNumberOfMoves());
+		UtilityValue beta1 = new UtilityValue(beta.getValue(),
+				beta.getNumberOfMoves());
+
 		for (Action action : state.getSuccessors()) {
+
 			Board nextState = result(action, state, true);
-			v = max(v, minUtilityValue(nextState));
+			v = max(v, minUtilityValue(nextState, alpha1, beta1));
+
+			if (max(v, beta1) == v) {
+				return v;
+			}
+
+			alpha1 = max(alpha1, v);
 		}
 		return v;
 	}
@@ -270,14 +309,27 @@ public class Game {
 		return false;
 	}
 
-	private UtilityValue minUtilityValue(Board state) {
+	private UtilityValue minUtilityValue(Board state, UtilityValue alpha,
+			UtilityValue beta) {
 		if (isTerminal(state)) {
 			return state.getUtilityValue();
 		}
-		UtilityValue v = new UtilityValue(100, 0);
+		UtilityValue v = new UtilityValue(INFINITE_PLUS_VALUE, 0);
+		UtilityValue alpha1 = new UtilityValue(alpha.getValue(),
+				alpha.getNumberOfMoves());
+		UtilityValue beta1 = new UtilityValue(beta.getValue(),
+				beta.getNumberOfMoves());
+
 		for (Action action : state.getSuccessors()) {
+
 			Board nextState = result(action, state, false);
-			v = min(v, maxUtilityValue(nextState));
+			v = min(v, maxUtilityValue(nextState, alpha1, beta1));
+
+			if (min(v, alpha1) == v) {
+				return v;
+			}
+
+			beta1 = min(beta1, v);
 		}
 		return v;
 	}
