@@ -145,7 +145,7 @@ public class Game {
 		List<Action> actions = state.getSuccessors();
 
 		for (Action a : actions) {
-			a.setUtilityValue(minValue(result(a, state, true)));
+			a.setUtilityValue(minUtilityValue(result(a, state, true)));
 		}
 
 		return maximalAction(actions);
@@ -213,14 +213,14 @@ public class Game {
 		return copy;
 	}
 
-	private UtilityValue maxValue(Board state) {
+	private UtilityValue maxUtilityValue(Board state) {
 		if (isTerminal(state)) {
 			return state.getUtilityValue();
 		}
 		UtilityValue v = new UtilityValue(-100, 0);
 		for (Action action : state.getSuccessors()) {
 			Board nextState = result(action, state, true);
-			v = max(v, minValue(nextState));
+			v = max(v, minUtilityValue(nextState));
 		}
 		return v;
 	}
@@ -270,14 +270,14 @@ public class Game {
 		return false;
 	}
 
-	private UtilityValue minValue(Board state) {
+	private UtilityValue minUtilityValue(Board state) {
 		if (isTerminal(state)) {
 			return state.getUtilityValue();
 		}
 		UtilityValue v = new UtilityValue(100, 0);
 		for (Action action : state.getSuccessors()) {
 			Board nextState = result(action, state, false);
-			v = min(v, maxValue(nextState));
+			v = min(v, maxUtilityValue(nextState));
 		}
 		return v;
 	}
