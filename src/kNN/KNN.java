@@ -10,18 +10,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Set;
 
 public class KNN {
 
+	private static final int TEST_DATA_SIZE = 20;
 	private List<Data> input;
 	private List<Data> testData;
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		KNN knn = new KNN();
-		knn.classifyTestData(1);
+		knn.classifyTestData();
 		/*
 		 * List<Data> knearest = knn.kNearestNeighbors(30, knn.testData.get(0));
 		 * for (Data data : knearest) {
@@ -30,7 +32,26 @@ public class KNN {
 		System.out.println("OK");
 	}
 
-	public void classifyTestData(int k) {
+	public int getInput() {
+		int k = 0;
+		try (Scanner scanner = new Scanner(System.in)) {
+			k = scanner.nextInt();
+		} catch (InputMismatchException e) {
+			System.out.println("Positive number is needed!");
+		} catch (NoSuchElementException e) {
+			System.out.println("No input");
+		}
+
+		return k;
+	}
+
+	public void classifyTestData() {
+		int k = getInput();
+		if (k <= 0) {
+			System.out.println("Positive number is required!");
+			return;
+		}
+
 		getInput("kNN.data.txt");
 
 		setTestData();
@@ -45,8 +66,8 @@ public class KNN {
 				countOfTruePredictions++;
 			}
 		}
-		System.out.printf("Per cent correctly classified: %f\n",
-				(double) countOfTruePredictions / testData.size());
+		System.out.printf("Per cent correctly classified: %d\n",
+				(countOfTruePredictions*100 / testData.size()));
 	}
 
 	public boolean classifyData(Data unclassifed, int k) {
@@ -155,7 +176,7 @@ public class KNN {
 	private void setTestData() {
 		Collections.shuffle(input);
 		testData = new LinkedList<>();
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < TEST_DATA_SIZE; i++) {
 			testData.add(input.remove(0));
 		}
 	}
