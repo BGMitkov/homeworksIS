@@ -1,4 +1,4 @@
-package KnapSackSolverGenetics;
+package knapSackSolverGenetics;
 
 import java.util.ArrayList;
 

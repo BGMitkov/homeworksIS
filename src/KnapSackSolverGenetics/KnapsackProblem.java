@@ -1,4 +1,4 @@
-package KnapSackSolverGenetics;
+package knapSackSolverGenetics;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -1,4 +1,4 @@
-package KnapSackSolverGenetics;
+package knapSackSolverGenetics;
 
 public class Item {
 	private int weight, value;
