@@ -22,10 +22,85 @@ public class NaiveBayesClassifier {
 		NaiveBayesClassifier nbc = new NaiveBayesClassifier();
 		nbc.initializeShaffledInput("data.txt");
 		nbc.tenFoldData();
-		
+		nbc.crossValidate();
 	}
-	
-	
+
+	private void crossValidate() {
+		int averagePercentPredicted = 0;
+		for (int i = 0; i < tenFoldVoters.size(); i++) {
+
+			int percentPredicted = classifyData(i);
+			System.out.printf("Iteration %d prediction success : %d\n", i,
+					percentPredicted);
+
+			averagePercentPredicted = averagePercentPredicted
+					+ (percentPredicted - averagePercentPredicted) / (i + 1);
+		}
+		System.out.println("Average percent of prediction is : "
+				+ averagePercentPredicted);
+	}
+
+	private int classifyData(int i) {
+		ArrayList<Voter> testVoters = tenFoldVoters.get(i);
+		boolean[] result = new boolean[testVoters.size()];
+		Trainers trainers = getTrainers(i);
+		double[][][] probabilities = trainers.GetProbabilities();
+
+		for (int j = 0; j < testVoters.size(); j++) {
+
+			result[j] = isClassifiedAsDemocrat(testVoters.get(j), i,
+					probabilities);
+		}
+		return compareResult(testVoters, result);
+	}
+
+	private int compareResult(ArrayList<Voter> testVoters, boolean[] result) {
+		int numberPredicted = 0;
+		for (int i = 0; i < result.length; i++) {
+			if (testVoters.get(i).isDemocrat() == result[i]) {
+				numberPredicted++;
+			}
+		}
+//		System.out.println(numberPredicted);
+		int percentPredicted = numberPredicted*100 / testVoters.size();
+		return percentPredicted;
+	}
+
+	private Trainers getTrainers(int testDataIndexToSkip) {
+		ArrayList<Voter> trainers = new ArrayList<>(NUMBER_OF_ENTRIES);
+		for (int i = 0; i < tenFoldVoters.size(); i++) {
+			if (i != testDataIndexToSkip) {
+				ArrayList<Voter> set = tenFoldVoters.get(i);
+				for (int j = 0; j < set.size(); j++) {
+					trainers.add(set.get(j));
+				}
+			}
+		}
+		return new Trainers(trainers);
+	}
+
+	private boolean isClassifiedAsDemocrat(Voter voter, int indexOfSet,
+			double[][][] probabilities) {
+		int[] classesProbability = new int[2];
+		classesProbability[0] = 1;
+		classesProbability[1] = 1;
+		for (int i = 0; i < classesProbability.length; i++) {
+			for (int j = 0; j < probabilities[0].length - 1; j++) {
+				if (voter.isVoteYes(j)) {
+					classesProbability[i] *= probabilities[i][j][0];
+				} else if (!voter.isVoteYes(j) && !voter.isVoteUnknown(j)) {
+					classesProbability[i] *= probabilities[i][j][1];
+				} else {
+					classesProbability[i] *= probabilities[i][j][2];
+				}
+			}
+			classesProbability[i] *= probabilities[i][16][0];
+		}
+		if (classesProbability[1] > classesProbability[0]) {
+			return true;
+		}
+		return false;
+	}
 
 	private void tenFoldData() {
 		tenFoldVoters = new ArrayList<ArrayList<Voter>>(10);
