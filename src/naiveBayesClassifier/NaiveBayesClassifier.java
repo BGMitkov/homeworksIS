@@ -14,7 +14,9 @@ public class NaiveBayesClassifier {
 
 	private static final int NUMBER_OF_SETS = 10;
 	private static final int NUMBER_OF_ATTRIBUTES_PLUS_CLASS = 17;
+	private static final int NUMBER_OF_ATTRIBUTES = 16;
 	private static final int NUMBER_OF_ENTRIES = 435;
+	private static final int NUMBER_OF_CLASSES = 2;
 	private List<Voter> voters;
 	private ArrayList<ArrayList<Voter>> tenFoldVoters;
 
@@ -30,14 +32,14 @@ public class NaiveBayesClassifier {
 		for (int i = 0; i < tenFoldVoters.size(); i++) {
 
 			int percentPredicted = classifyData(i);
-			System.out.printf("Iteration %d prediction success : %d\n", i,
-					percentPredicted);
-
-			averagePercentPredicted = averagePercentPredicted
-					+ (percentPredicted - averagePercentPredicted) / (i + 1);
+			System.out.printf("Iteration %d prediction success : %d\n", i, percentPredicted);
+			averagePercentPredicted += percentPredicted;
+			/*
+			 * averagePercentPredicted = averagePercentPredicted +
+			 * (percentPredicted - averagePercentPredicted) / (i + 1);
+			 */
 		}
-		System.out.println("Average percent of prediction is : "
-				+ averagePercentPredicted);
+		System.out.println("Average percent of prediction is : " + averagePercentPredicted / tenFoldVoters.size());
 	}
 
 	private int classifyData(int i) {
@@ -48,8 +50,7 @@ public class NaiveBayesClassifier {
 
 		for (int j = 0; j < testVoters.size(); j++) {
 
-			result[j] = isClassifiedAsDemocrat(testVoters.get(j), i,
-					probabilities);
+			result[j] = isClassifiedAsDemocrat(testVoters.get(j), i, probabilities);
 		}
 		return compareResult(testVoters, result);
 	}
@@ -61,8 +62,7 @@ public class NaiveBayesClassifier {
 				numberPredicted++;
 			}
 		}
-//		System.out.println(numberPredicted);
-		int percentPredicted = numberPredicted*100 / testVoters.size();
+		int percentPredicted = numberPredicted * 100 / testVoters.size();
 		return percentPredicted;
 	}
 
@@ -79,20 +79,23 @@ public class NaiveBayesClassifier {
 		return new Trainers(trainers);
 	}
 
-	private boolean isClassifiedAsDemocrat(Voter voter, int indexOfSet,
-			double[][][] probabilities) {
-		int[] classesProbability = new int[2];
-		classesProbability[0] = 1;
-		classesProbability[1] = 1;
+	private boolean isClassifiedAsDemocrat(Voter voter, int indexOfSet, double[][][] probabilities) {
+		double[] classesProbability = new double[NUMBER_OF_CLASSES];
 		for (int i = 0; i < classesProbability.length; i++) {
-			for (int j = 0; j < probabilities[0].length - 1; j++) {
+			classesProbability[i]++;
+		}
+
+		for (int i = 0; i < NUMBER_OF_CLASSES; i++) {
+			for (int j = 0; j < NUMBER_OF_ATTRIBUTES; j++) {
 				if (voter.isVoteYes(j)) {
 					classesProbability[i] *= probabilities[i][j][0];
 				} else if (!voter.isVoteYes(j) && !voter.isVoteUnknown(j)) {
 					classesProbability[i] *= probabilities[i][j][1];
-				} else {
-					classesProbability[i] *= probabilities[i][j][2];
-				}
+					// System.out.println("Probability of 0 is being used " +
+					// probabilities[i][j][1]);
+				} /*
+					 * else { classesProbability[i] *= probabilities[i][j][2]; }
+					 */
 			}
 			classesProbability[i] *= probabilities[i][16][0];
 		}
@@ -131,13 +134,17 @@ public class NaiveBayesClassifier {
 				Voter voter = new Voter();
 				for (int j = 0; j < NUMBER_OF_ATTRIBUTES_PLUS_CLASS - 1; j++) {
 					vote = scanner.next();
+					// System.out.print(vote + " ");
 					if (vote.equals("y")) {
 						voter.voteYes(j);
 					} else if (vote.equals("u")) {
 						voter.voteUnknown(j);
 					}
 				}
+
 				classification = scanner.next();
+				// System.out.print(classification + " ");
+				// System.out.println();
 				if (classification.equals("democrat")) {
 					voter.setToBeDemocrat();
 				}
@@ -149,8 +156,7 @@ public class NaiveBayesClassifier {
 		} catch (NullPointerException e) {
 			System.out.println("File has not been provided");
 		} catch (InputMismatchException e) {
-			System.out
-					.printf("Data is corrupted! Input is not valid at line: %d");
+			System.out.printf("Data is corrupted! Input is not valid at line: %d");
 		} catch (FileNotFoundException e) {
 			System.out.println("Data input file not found");
 		}
