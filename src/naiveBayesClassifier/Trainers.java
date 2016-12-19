@@ -64,12 +64,9 @@ public class Trainers {
 				if (probabilities[i][j][0] <= 0.0) {
 					System.out.println("Probability of yes is 0 or less");
 				}
-				double noes = (double) (totalVotersOfType - (double) countOfYesVotes[i][j]
-						- (double) countOfUnknownVotes[i][j]);
-				if(noes <= 0) {
-					noes = 1;
-				}
-				probabilities[i][j][1] =  noes / totalVotersOfType;
+				double noes = totalVotersOfType - (double) countOfYesVotes[i][j] + 1;
+
+				probabilities[i][j][1] = noes / totalVotersOfType;
 				if (probabilities[i][j][1] <= 0.0) {
 					System.out.println(
 							"Probability of no is 0 or less " + probabilities[i][j][1] + " i:" + i + " j:" + j);
